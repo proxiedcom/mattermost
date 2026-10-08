@@ -1,8 +1,8 @@
-FROM alpine:3.19
+FROM alpine:3.22
 
 # Some ENV variables
 ENV PATH="/mattermost/bin:${PATH}"
-ENV MM_VERSION=9.7.3
+ENV MM_VERSION=11.11.1
 
 # Build argument to set Mattermost edition
 ARG edition=enterprise
@@ -37,6 +37,8 @@ RUN mkdir -p /mattermost/data /mattermost/plugins /mattermost/client/plugins \
     && chown -R mattermost:mattermost /mattermost /config.json.save /mattermost/plugins /mattermost/client/plugins \
     && curl -o /usr/local/bin/mc https://dl.min.io/client/mc/release/linux-amd64/mc \
     && chmod a+x /usr/local/bin/mc
+
+COPY --from=pgsty/minio:RELEASE.2026-08-04T00-00-00Z /usr/bin/mc /usr/local/bin/mc
 
 USER mattermost
 
