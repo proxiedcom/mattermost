@@ -65,13 +65,28 @@ if [ "$1" = 'mattermost' ]; then
 
   if [[ "$MM_FILESETTINGS_DRIVERNAME" == amazons3 ]]; then
     echo 'Configuring minio'
-     mc alias set minio \
+    mc alias set minio \
       "http://${MM_FILESETTINGS_AMAZONS3ENDPOINT}" \
       "${MM_FILESETTINGS_AMAZONS3ACCESSKEYID}" \
       "${MM_FILESETTINGS_AMAZONS3SECRETACCESSKEY}"
 
     echo "Creating minio bucket ${MM_FILESETTINGS_AMAZONS3BUCKET}"
     mc mb -p "minio/${MM_FILESETTINGS_AMAZONS3BUCKET}"
+  fi
+
+  # Mattermost migration 174 (set_posts_statistics_targets) runs "ANALYZE posts" with a
+  # statistics target of 5000, which needs more memory than a small Postgres instance has
+  # and kills the connection. It only tunes query-planner statistics, so mark it as applied
+  # and let Mattermost skip it. Only done once the database has reached migration 173;
+  # harmless to repeat on every start.
+  if [ -n "$MM_SQLSETTINGS_DATASOURCE" ]; then
+    echo "Marking Mattermost migration 174 (set_posts_statistics_targets) as applied"
+    psql "$MM_SQLSETTINGS_DATASOURCE" -qAtc \
+      "INSERT INTO db_migrations (version, name)
+       SELECT 174, 'set_posts_statistics_targets'
+       WHERE EXISTS (SELECT 1 FROM db_migrations WHERE version = 173)
+       ON CONFLICT (version) DO NOTHING" \
+      || echo "Could not mark migration 174 (new database?) - continuing"
   fi
 
   export MM_ELASTICSEARCHSETTINGS_CONNECTIONURL="http://${MM_ELASTICSEARCHSETTINGS_HOSTPORT}"

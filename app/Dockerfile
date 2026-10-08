@@ -21,6 +21,7 @@ RUN apk add --no-cache \
 	linux-headers \
 	mailcap \
 	netcat-openbsd \
+	postgresql-client \
 	xmlsec-dev \
 	tzdata \
 	&& rm -rf /tmp/*
@@ -34,10 +35,9 @@ RUN mkdir -p /mattermost/data /mattermost/plugins /mattermost/client/plugins \
     && rm -rf /mattermost/config/config.json \
     && addgroup -g ${PGID} mattermost \
     && adduser -D -u ${PUID} -G mattermost -h /mattermost -D mattermost \
-    && chown -R mattermost:mattermost /mattermost /config.json.save /mattermost/plugins /mattermost/client/plugins \
-    && curl -o /usr/local/bin/mc https://dl.min.io/client/mc/release/linux-amd64/mc \
-    && chmod a+x /usr/local/bin/mc
+    && chown -R mattermost:mattermost /mattermost /config.json.save /mattermost/plugins /mattermost/client/plugins
 
+# MinIO client (mc): dl.min.io no longer serves binaries, so take it from the same image the minio service uses
 COPY --from=pgsty/minio:RELEASE.2026-08-04T00-00-00Z /usr/bin/mc /usr/local/bin/mc
 
 USER mattermost
