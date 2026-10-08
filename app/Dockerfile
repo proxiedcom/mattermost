@@ -5,7 +5,7 @@ ENV PATH="/mattermost/bin:${PATH}"
 ENV MM_VERSION=11.11.1
 
 # Build argument to set Mattermost edition
-ARG edition=enterprise
+ARG edition=team
 ARG PUID=2000
 ARG PGID=2000
 ARG MM_BINARY=
